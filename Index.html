@@ -1,0 +1,87 @@
+# News-verifier<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HT News Verifier - India</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background: #f4f4f4; }
+        h1 { color: #d32f2f; text-align: center; }
+        #news-list { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .article { border-left: 4px solid #4caf50; padding: 10px; margin: 10px 0; background: #f9f9f9; }
+        .article h3 { margin: 0 0 5px; }
+        .article small { color: #666; }
+        #checker { margin: 20px 0; padding: 20px; background: white; border-radius: 8px; text-align: center; }
+        input[type="text"] { width: 70%; padding: 10px; font-size: 16px; }
+        button { padding: 10px 20px; background: #d32f2f; color: white; border: none; font-size: 16px; cursor: pointer; }
+        #result { margin-top: 10px; font-weight: bold; font-size: 18px; }
+        .fake { color: #f44336; }
+        .real { color: #4caf50; }
+        .loading { color: #ff9800; }
+        .error { color: #f44336; }
+    </style>
+</head>
+<body>
+    <h1>📰 Hindustan Times News Verifier (India)</h1>
+    <p style="text-align: center;">Fetches latest from <a href="https://www.hindustantimes.com/" target="_blank">Hindustan Times</a> – trusted source. All listed news is REAL.[web:11]</p>
+    
+  <div id="checker">
+        <input type="text" id="headline" placeholder="Paste a news headline to verify...">
+        <button onclick="checkHeadline()">Check if Real</button>
+        <div id="result"></div>
+    </div>
+    
+  <div id="news-list">
+        <p>Loading latest HT India news...</p>
+    </div>
+
+  <script>
+        const RSS_URL = 'https://www.hindustantimes.com/feeds/rss/india-news/rssfeed.xml';[page:1]
+
+        // Fetch and display news
+        fetch(RSS_URL)
+            .then(response => response.text())
+            .then(str => new window.DOMParser().parseFromString(str, "text/xml"))
+            .then(data => {
+                const items = data.querySelectorAll('item');
+                const list = document.getElementById('news-list');
+                list.innerHTML = '';
+                let headlines = []; // For checker
+                items.forEach((item, index) => {
+                    if (index >= 10) return; // Limit to top 10
+                    const title = item.querySelector('title').textContent;
+                    const link = item.querySelector('link').textContent;
+                    const pubDate = item.querySelector('pubDate').textContent;
+                    headlines.push(title.toLowerCase());
+                    const div = document.createElement('div');
+                    div.className = 'article';
+                    div.innerHTML = `
+                        <h3><a href="${link}" target="_blank">${title}</a></h3>
+                        <small>Published: ${new Date(pubDate).toLocaleString('en-IN')}</small><br>
+                        <span style="color: #4caf50; font-weight: bold;">✅ REAL - From Hindustan Times</span>
+                    `;
+                    list.appendChild(div);
+                });
+                window.headlines = headlines; // Store for checker
+            })
+            .catch(err => {
+                document.getElementById('news-list').innerHTML = '<p class="error">Error loading news: ' + err + '. Check internet or try later.</p>';
+            });
+
+        // Check function
+        function checkHeadline() {
+            const input = document.getElementById('headline').value.trim();
+            const result = document.getElementById('result');
+            if (!input || !window.headlines) {
+                result.textContent = 'Enter a headline and load news first.';
+                result.className = 'error';
+                return;
+            }
+            const lowerInput = input.toLowerCase();
+            const match = window.headlines.some(h => h.includes(lowerInput) || lowerInput.includes(h));
+            result.textContent = match ? '✅ REAL - Matches Hindustan Times news!' : '❌ Not found in latest HT news (could be fake or old).';
+            result.className = match ? 'real' : 'fake';
+        }
+    </script>
+</body>
+</html>
